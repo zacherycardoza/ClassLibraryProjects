@@ -7,7 +7,7 @@ trigger:
 - master
 
 pool:
-  vmImage: MyPool
+  vmImage: Self-Hosted-Pool
 
 jobs:
 - job: BuildAndTest
