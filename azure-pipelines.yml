@@ -1,0 +1,50 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: Self-Hosted-Pool
+
+jobs:
+- job: BuildAndTest
+  displayName: Build and Test
+  steps:
+  - task: DotNetCoreCLI@2
+    displayName: dotnet restore
+    inputs:
+      command: 'restore'
+      projects: '**/* .csproj'
+  - task: DotNetCoreCLI@2
+    displayName: dotnet build
+    inputs:
+      command: 'build'
+      projects: '**/* .csproj'
+- job: CreateNugetPackage
+  displayName: Create Nuget Package
+  dependsOn: BuildAndTest
+  condition: succeeded()
+  steps:
+  - task: DotNetCoreCLI@2
+    displayName: dotnet pack
+    inputs:
+      command: 'pack'
+      packagesToPack: '**/StringLibrary.csproj'
+      versioningScheme: 'byBuildNumber'
+  - task: DotNetCoreCLI@2
+    displayName: dotnet push
+    inputs:
+      command: 'push'
+      packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+      nuGetFeedType: 'internal'
+      publishVstsFeed: 'cb1ea6a7-d26e-4260-9c62-f1b1a10d0656/3092f3e6-74a4-4cb9-b195-c9fb56636fc0'
+  - task: PublishBuildArtifacts@1
+    displayName: publish artifact
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      TargetPath: '\\StringLibrary\$(Build.DefintionName)\$(Build.BuildNumber)'
+      ArtifactName: 'drop'
+      publishLocation: 'Container'
